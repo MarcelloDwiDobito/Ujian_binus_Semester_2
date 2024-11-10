@@ -1,0 +1,154 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+
+using namespace std;
+
+// Struktur untuk menyimpan task
+struct Task {
+    int id;
+    string name;
+    int priority;  // 1 = tertinggi, 5 = terendah
+    int deadline;  // dalam hitungan hari hingga deadline
+    string assignedTo;
+
+    // Constructor untuk membuat task
+    Task(int i, string n, int p, int d) : id(i), name(n), priority(p), deadline(d), assignedTo("") {}
+
+    // Operator untuk Min-Heap (prioritas lebih rendah berarti prioritas lebih tinggi)
+    bool operator<(const Task& other) const {
+        if (priority == other.priority)
+            return deadline > other.deadline;  // Jika prioritas sama, urutkan berdasarkan deadline
+        return priority > other.priority;       // Prioritas rendah lebih penting
+    }
+};
+
+// Struktur data untuk Min-Heap menggunakan priority_queue
+priority_queue<Task> taskQueue;
+
+// Fungsi untuk menambahkan task ke heap
+void insertTask(int id, string name, int priority, int deadline) {
+    Task newTask(id, name, priority, deadline);
+    taskQueue.push(newTask);
+    cout << "Task '" << name << "' berhasil ditambahkan dengan prioritas " << priority << " dan deadline " << deadline << " hari.\n";
+}
+
+// Fungsi untuk mengeluarkan dan assign task dengan prioritas tertinggi
+void assignTask(string member) {
+    if (taskQueue.empty()) {
+        cout << "Tidak ada task yang tersedia untuk di-assign.\n";
+        return;
+    }
+    
+    Task topTask = taskQueue.top();
+    taskQueue.pop();
+    topTask.assignedTo = member;
+    
+    cout << "Task dengan ID " << topTask.id << " ('" << topTask.name << "') telah di-assign ke " << member << ".\n";
+}
+
+// Fungsi untuk mengupdate task
+void updateTask(int id, int newPriority, int newDeadline) {
+    vector<Task> tempTasks;
+    bool found = false;
+    
+    // Cari task dan keluarkan dari queue sementara
+    while (!taskQueue.empty()) {
+        Task t = taskQueue.top();
+        taskQueue.pop();
+        
+        if (t.id == id) {
+            t.priority = newPriority;
+            t.deadline = newDeadline;
+            found = true;
+            cout << "Task dengan ID " << id << " berhasil diupdate.\n";
+        }
+        
+        tempTasks.push_back(t);
+    }
+    
+    // Masukkan kembali semua task ke queue
+    for (Task &t : tempTasks) {
+        taskQueue.push(t);
+    }
+    
+    if (!found) {
+        cout << "Task dengan ID " << id << " tidak ditemukan.\n";
+    }
+}
+
+// Fungsi untuk menampilkan semua task
+void displayTasks() {
+    vector<Task> tempTasks;
+    
+    cout << "\nDaftar Task (berdasarkan prioritas dan deadline):\n";
+    while (!taskQueue.empty()) {
+        Task t = taskQueue.top();
+        taskQueue.pop();
+        cout << "ID: " << t.id << ", Nama: " << t.name << ", Prioritas: " << t.priority
+             << ", Deadline: " << t.deadline << " hari, Assigned To: " << (t.assignedTo.empty() ? "Belum Diassign" : t.assignedTo) << endl;
+        tempTasks.push_back(t);
+    }
+    
+    // Kembalikan task ke dalam queue
+    for (Task &t : tempTasks) {
+        taskQueue.push(t);
+    }
+    cout << endl;
+}
+
+int main() {
+    int choice, id, priority, deadline;
+    string name, member;
+    
+    while (true) {
+        cout << "\n--- Menu Manajemen Proyek ---\n";
+        cout << "1. Insert Task\n2. Assign Task\n3. Update Task\n4. Display All Tasks\n5. Exit\n";
+        cout << "Pilih opsi: ";
+        cin >> choice;
+        
+        switch (choice) {
+            case 1:
+                cout << "Masukkan ID Task: ";
+                cin >> id;
+                cin.ignore();
+                cout << "Masukkan Nama Task: ";
+                getline(cin, name);
+                cout << "Masukkan Tingkat Prioritas (1 = tertinggi, 5 = terendah): ";
+                cin >> priority;
+                cout << "Masukkan Deadline (dalam hitungan hari): ";
+                cin >> deadline;
+                insertTask(id, name, priority, deadline);
+                break;
+                
+            case 2:
+                cout << "Masukkan nama anggota tim untuk assign: ";
+                cin.ignore();
+                getline(cin, member);
+                assignTask(member);
+                break;
+                
+            case 3:
+                cout << "Masukkan ID Task yang akan diupdate: ";
+                cin >> id;
+                cout << "Masukkan Tingkat Prioritas baru: ";
+                cin >> priority;
+                cout << "Masukkan Deadline baru (dalam hitungan hari): ";
+                cin >> deadline;
+                updateTask(id, priority, deadline);
+                break;
+                
+            case 4:
+                displayTasks();
+                break;
+                
+            case 5:
+                cout << "Keluar dari program.\n";
+                return 0;
+                
+            default:
+                cout << "Pilihan tidak valid.\n";
+        }
+    }
+}
